@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,8 +16,8 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 20px;
-            padding: 0;
+            margin: 0;
+            padding: 20px;
             box-sizing: border-box;
         }
 
@@ -26,7 +27,7 @@
             background-color: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             padding: 20px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(10px);
             text-align: center;
             overflow-y: auto;
@@ -34,7 +35,7 @@
         }
 
         h1 {
-            color: #ffffff;
+            color: #E1306C;
             margin-bottom: 10px;
             text-transform: uppercase;
         }
@@ -50,8 +51,8 @@
         button,
         #download-link {
             margin: 5px;
-            padding: 8px;
-            border-radius: 5px;
+            padding: 10px;
+            border-radius: 10px;
             border: none;
             background: rgba(255, 255, 255, 0.2);
             color: #ffffff;
@@ -76,15 +77,15 @@
 
         #progress-bar {
             width: 100%;
-            background-color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.2);
             border-radius: 5px;
-            margin: 15px 0;
+            margin: 15px auto;
             overflow: hidden;
         }
 
         #progress-bar div {
             height: 10px;
-            background-color: #ffffff;
+            background-color: #E1306C;
             width: 0;
             border-radius: 5px;
             transition: width 0.3s ease;
@@ -111,8 +112,10 @@
             border-radius: 5px;
             display: inline-block;
             margin-top: 10px;
-            pointer-events: none; /* Disable pointer events */
-            opacity: 0.5; /* Make button semi-transparent */
+            pointer-events: none;
+            /* Disable pointer events */
+            opacity: 0.5;
+            /* Make button semi-transparent */
             transition: background 0.3s ease;
         }
 
@@ -121,10 +124,12 @@
         }
 
         .green {
-            background-color: #4CAF50 !important; /* Green color for progress bar */
+            background-color: #4CAF50 !important;
+            /* Green color for progress bar */
         }
 
         @media (max-width: 600px) {
+
             input[type="file"],
             input[type="number"],
             button,
@@ -135,6 +140,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>Insta Inset</h1>
@@ -189,43 +195,46 @@
 
             const reader = new FileReader();
 
-            reader.onloadstart = function() {
+            reader.onloadstart = function () {
                 updateProgressBar(0);
                 downloadLink.style.pointerEvents = 'none'; // Disable download link
                 downloadLink.style.opacity = '0.5'; // Make download link semi-transparent
             };
 
-            reader.onprogress = function(event) {
+            reader.onprogress = function (event) {
                 if (event.lengthComputable) {
                     const percentLoaded = Math.round((event.loaded / event.total) * 100);
                     updateProgressBar(percentLoaded);
                 }
             };
 
-            reader.onload = function(event) {
+            reader.onload = function (event) {
                 const img = new Image();
-                img.onload = function() {
+                img.onload = function () {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     const insetRatio = insetWidth / 100;
 
                     // Calculate dimensions for output image
-                    let outputWidth, outputHeight;
-                    if (img.width > img.height) {
-                        outputWidth = img.width;
-                        outputHeight = img.width;
-                    } else {
-                        outputWidth = img.height;
-                        outputHeight = img.height;
-                    }
+                    const size = Math.max(img.width, img.height);
+                    const insetSize = size * insetRatio;
 
-                    canvas.width = outputWidth;
-                    canvas.height = outputHeight;
+                    canvas.width = size;
+                    canvas.height = size;
 
-                    // Draw image with insets
+                    // Calculate scaling factors while maintaining aspect ratio
+                    const scale = Math.min((canvas.width - 2 * insetSize) / img.width, (canvas.height - 2 * insetSize) / img.height);
+                    const scaledWidth = img.width * scale;
+                    const scaledHeight = img.height * scale;
+
+                    // Center the image on the canvas
+                    const x = (canvas.width - scaledWidth) / 2;
+                    const y = (canvas.height - scaledHeight) / 2;
+
+                    // Draw white background with insets
                     ctx.fillStyle = 'white';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(img, (canvas.width - img.width) / 2, (canvas.height - img.height) / 2);
+                    ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
 
                     // Set processed image source
                     processedImage.src = canvas.toDataURL(file.type); // Use original image type
@@ -234,9 +243,11 @@
                     updateProgressBar(100);
                     downloadLink.style.pointerEvents = 'auto'; // Enable download link
                     downloadLink.style.opacity = '1'; // Make download link fully opaque
+
+                    imageContainer.style.display = 'block'; // Show the processed image container
                 };
 
-                img.onerror = function() {
+                img.onerror = function () {
                     processedImage.style.display = 'none'; // Hide image element
                     processedImage.alt = 'Image could not be processed'; // Set alt text
                 };
@@ -248,4 +259,5 @@
         }
     </script>
 </body>
+
 </html>
