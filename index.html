@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insta Inset</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500&display=swap');
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 20px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            text-align: center;
+            overflow-y: auto;
+            max-height: calc(100vh - 40px);
+        }
+
+        h1 {
+            color: #ffffff;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        p {
+            color: #bbbbbb;
+            margin-top: 5px;
+            margin-bottom: 20px;
+        }
+
+        input[type="file"],
+        input[type="number"],
+        button,
+        #download-link {
+            margin: 5px;
+            padding: 8px;
+            border-radius: 5px;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            font-size: 14px;
+            transition: background 0.3s ease, color 0.3s ease;
+            min-width: 100px;
+            box-sizing: border-box;
+        }
+
+        input[type="file"]:focus,
+        input[type="number"]:focus,
+        button:hover,
+        #download-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+            outline: none;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        #progress-bar {
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 5px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        #progress-bar div {
+            height: 10px;
+            background-color: #ffffff;
+            width: 0;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+
+        #image-container {
+            display: none;
+            margin-top: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 10px;
+        }
+
+        #download-link {
+            color: #ffffff;
+            text-decoration: none;
+            border: 1px solid #ffffff;
+            padding: 8px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-top: 10px;
+            pointer-events: none; /* Disable pointer events */
+            opacity: 0.5; /* Make button semi-transparent */
+            transition: background 0.3s ease;
+        }
+
+        #download-link:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .green {
+            background-color: #4CAF50 !important; /* Green color for progress bar */
+        }
+
+        @media (max-width: 600px) {
+            input[type="file"],
+            input[type="number"],
+            button,
+            #download-link {
+                font-size: 12px;
+                padding: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Insta Inset</h1>
+        <p>Perfectly square any photo for Instagram, maintaining quality.</p>
+        <input type="file" id="file-input" accept="image/jpeg, image/png">
+        <br>
+        <label for="inset-width">Inset Width (%): </label>
+        <input type="number" id="inset-width" min="1" max="50" value="10">
+        <br>
+        <div id="progress-bar">
+            <div></div>
+        </div>
+        <button onclick="processImage()">Process Image</button>
+        <a id="download-link" download="processed-image.jpeg">Download Processed Image</a>
+        <br>
+        <div id="image-container">
+            <img id="processed-image" src="" alt="Processed Image">
+        </div>
+    </div>
+
+    <script>
+        function updateProgressBar(value) {
+            const progressBar = document.getElementById('progress-bar').firstElementChild;
+            progressBar.style.width = `${value}%`;
+
+            if (value === 100) {
+                progressBar.classList.add('green');
+            } else {
+                progressBar.classList.remove('green');
+            }
+        }
+
+        function processImage() {
+            const fileInput = document.getElementById('file-input');
+            const insetWidth = document.getElementById('inset-width').value;
+            const imageContainer = document.getElementById('image-container');
+            const processedImage = document.getElementById('processed-image');
+            const downloadLink = document.getElementById('download-link');
+
+            if (!fileInput.files || !fileInput.files[0]) {
+                alert('Please upload an image.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+
+            // Check if file type is JPEG or PNG
+            if (!file.type.startsWith('image/jpeg') && !file.type.startsWith('image/png')) {
+                alert('Only JPEG and PNG images are supported.');
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onloadstart = function() {
+                updateProgressBar(0);
+                downloadLink.style.pointerEvents = 'none'; // Disable download link
+                downloadLink.style.opacity = '0.5'; // Make download link semi-transparent
+            };
+
+            reader.onprogress = function(event) {
+                if (event.lengthComputable) {
+                    const percentLoaded = Math.round((event.loaded / event.total) * 100);
+                    updateProgressBar(percentLoaded);
+                }
+            };
+
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const insetRatio = insetWidth / 100;
+
+                    // Calculate dimensions for output image
+                    let outputWidth, outputHeight;
+                    if (img.width > img.height) {
+                        outputWidth = img.width;
+                        outputHeight = img.width;
+                    } else {
+                        outputWidth = img.height;
+                        outputHeight = img.height;
+                    }
+
+                    canvas.width = outputWidth;
+                    canvas.height = outputHeight;
+
+                    // Draw image with insets
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, (canvas.width - img.width) / 2, (canvas.height - img.height) / 2);
+
+                    // Set processed image source
+                    processedImage.src = canvas.toDataURL(file.type); // Use original image type
+                    downloadLink.href = processedImage.src;
+
+                    updateProgressBar(100);
+                    downloadLink.style.pointerEvents = 'auto'; // Enable download link
+                    downloadLink.style.opacity = '1'; // Make download link fully opaque
+                };
+
+                img.onerror = function() {
+                    processedImage.style.display = 'none'; // Hide image element
+                    processedImage.alt = 'Image could not be processed'; // Set alt text
+                };
+
+                img.src = event.target.result;
+            };
+
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+</html>
